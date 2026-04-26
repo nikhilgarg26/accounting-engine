@@ -29,7 +29,7 @@ public class SQLiteCompanyRepository implements CompanyRepo {
     }
 
     @Override
-    public Optional<Company> findById(String id) {
+    public Company findById(String id) {
 
         String sql = "SELECT * FROM companies WHERE id = ?";
 

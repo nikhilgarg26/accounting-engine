@@ -39,6 +39,13 @@ public class CompanyService {
         return company;
     }
 
+    public Company getCompanyById(String id){
+        return companyRepo.findById(id);
+    }
+
+
+
+    // helper functions
     private void createDefaultGroups(Company company) {
 
         Map<String, String> nameToId = new HashMap<>();

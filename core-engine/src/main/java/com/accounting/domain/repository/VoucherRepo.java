@@ -18,4 +18,6 @@ public interface VoucherRepo {
     List<Voucher> findByDateRange(String companyId, LocalDate from, LocalDate to);
 
     List<Entry> findEntriesByVoucherId(String voucherId);
+
+    List<Entry> findEntriesByLedgerId(String ledgerId);
 }

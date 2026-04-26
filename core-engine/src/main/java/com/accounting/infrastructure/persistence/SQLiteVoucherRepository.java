@@ -81,7 +81,18 @@ public class SQLiteVoucherRepository implements VoucherRepo {
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                return Optional.of(mapVoucher(rs));
+                Voucher v = mapVoucher(rs);
+
+                // 🔥 attach entries
+                List<Entry> entries = findEntriesByVoucherId(id);
+
+                return Optional.of(new Voucher(
+                        v.getId(),
+                        v.getCompanyId(),
+                        v.getVoucherType(),
+                        v.getDate(),
+                        entries
+                ));
             }
 
             return Optional.empty();
@@ -104,7 +115,17 @@ public class SQLiteVoucherRepository implements VoucherRepo {
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
-                list.add(mapVoucher(rs));
+                Voucher v = mapVoucher(rs);
+
+                List<Entry> entries = findEntriesByVoucherId(v.getId());
+
+                list.add(new Voucher(
+                        v.getId(),
+                        v.getCompanyId(),
+                        v.getVoucherType(),
+                        v.getDate(),
+                        entries
+                ));
             }
 
             return list;
@@ -135,7 +156,17 @@ public class SQLiteVoucherRepository implements VoucherRepo {
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
-                list.add(mapVoucher(rs));
+                Voucher v = mapVoucher(rs);
+
+                List<Entry> entries = findEntriesByVoucherId(v.getId());
+
+                list.add(new Voucher(
+                        v.getId(),
+                        v.getCompanyId(),
+                        v.getVoucherType(),
+                        v.getDate(),
+                        entries
+                ));
             }
 
             return list;
@@ -155,6 +186,28 @@ public class SQLiteVoucherRepository implements VoucherRepo {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, voucherId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                list.add(mapEntry(rs));
+            }
+
+            return list;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to fetch entries", e);
+        }
+    }
+
+    @Override
+    public List<Entry> findEntriesByLedgerId(String ledgerId) {
+        String sql = "SELECT * FROM entries WHERE ledger_id = ?";
+        List<Entry> list = new ArrayList<>();
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, ledgerId);
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {

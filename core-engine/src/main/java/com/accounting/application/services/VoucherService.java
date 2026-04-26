@@ -68,7 +68,11 @@ public class VoucherService {
                 .orElseThrow(() -> new RuntimeException("Voucher not found"));
     }
 
-    public List<Entry> getEntries(String voucherId) {
+    public List<Entry> getEntriesByVoucher(String voucherId) {
         return voucherRepo.findEntriesByVoucherId(voucherId);
+    }
+
+    public List<Entry> getEntriesByLedger(String ledgerId) {
+        return voucherRepo.findEntriesByLedgerId(ledgerId);
     }
 }
