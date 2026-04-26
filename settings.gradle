@@ -1,0 +1,5 @@
+rootProject.name = 'accounting-project'
+
+include 'core-engine'
+
+include 'api'
