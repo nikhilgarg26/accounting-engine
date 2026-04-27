@@ -14,4 +14,6 @@ public interface GroupRepo {
     List<Group> findByCompanyId(String companyId);
 
     List<Group> findAll();
+
+    Optional<Group> findByNameAndCompany(String groupName, String companyId);
 }

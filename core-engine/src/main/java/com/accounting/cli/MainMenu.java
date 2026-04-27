@@ -25,7 +25,7 @@ public class MainMenu {
     private final VoucherService voucherService =
             new VoucherService(voucherRepo);
 
-    private final ReportService reportService = new ReportService(voucherRepo);
+    private final ReportService reportService = new ReportService(voucherRepo, ledgerRepo, groupRepo);
 
     private Company selectedCompany;
 
@@ -44,7 +44,10 @@ public class MainMenu {
             System.out.println("8. View Vouchers");
             System.out.println("9. View Group Details");
             System.out.println("10. View Ledger Details");
-            System.out.println("11. Exit");
+            System.out.println("11. View Trial Balance");
+            System.out.println("12. View Profit & Loss");
+            System.out.println("13. View Balance Sheet");
+            System.out.println("14. Exit");
 
             int choice = scanner.nextInt();
             scanner.nextLine();
@@ -60,7 +63,10 @@ public class MainMenu {
                 case 8 -> viewVouchers();
                 case 9 -> viewGroupDetails();
                 case 10 -> viewLedgerDetails();
-                case 11 -> {
+                case 11 -> viewTrialBalance();
+                case 12 -> viewProfitLoss();
+                case 13 -> viewBalanceSheet();
+                case 14 -> {
                     System.out.println("Exiting...");
                     return;
                 }
@@ -349,6 +355,103 @@ public class MainMenu {
         System.out.println("Balance: " + balance);
         System.out.println("Type: " + l.getType());
         System.out.println("Company ID: " + l.getCompanyId());
+    }
+
+    private void viewTrialBalance() {
+
+        if (!checkCompany()) return;
+
+        List<TrialBalanceRow> rows =
+                reportService.getTrialBalance(selectedCompany.getId());
+
+        double totalDr = 0;
+        double totalCr = 0;
+
+        System.out.println("\n===== TRIAL BALANCE =====");
+        System.out.printf("%-20s %-10s %-10s%n", "Ledger", "DR", "CR");
+
+        for (TrialBalanceRow row : rows) {
+
+            System.out.printf("%-20s %-10.2f %-10.2f%n",
+                    row.getLedgerName(),
+                    row.getDebit(),
+                    row.getCredit()
+            );
+
+            totalDr += row.getDebit();
+            totalCr += row.getCredit();
+        }
+
+        System.out.println("-------------------------------------------");
+
+        System.out.printf("%-20s %-10.2f %-10.2f%n",
+                "TOTAL", totalDr, totalCr);
+
+        if (totalDr == totalCr) {
+            System.out.println("✅ Trial Balance Matched");
+        } else {
+            System.out.println("❌ Trial Balance NOT Matching");
+        }
+    }
+
+    private void viewProfitLoss() {
+
+        if (!checkCompany()) return;
+
+        ProfitLossStatement pl =
+                reportService.getProfitLoss(selectedCompany.getId());
+
+        System.out.println("\n===== PROFIT & LOSS =====");
+
+        System.out.println("\n--- Income ---");
+        pl.getIncome().forEach((name, amt) ->
+                System.out.printf("%-20s %.2f%n", name, amt));
+
+        System.out.println("Total Income: " + pl.getTotalIncome());
+
+        System.out.println("\n--- Expense ---");
+        pl.getExpense().forEach((name, amt) ->
+                System.out.printf("%-20s %.2f%n", name, amt));
+
+        System.out.println("Total Expense: " + pl.getTotalExpense());
+
+        System.out.println("\n-------------------------");
+
+        if (pl.getProfit() >= 0) {
+            System.out.println("Profit: " + pl.getProfit());
+        } else {
+            System.out.println("Loss: " + Math.abs(pl.getProfit()));
+        }
+    }
+
+    private void viewBalanceSheet() {
+
+        if (!checkCompany()) return;
+
+        BalanceSheet bs =
+                reportService.getBalanceSheet(selectedCompany.getId());
+
+        System.out.println("\n===== BALANCE SHEET =====");
+
+        System.out.println("\n--- Assets ---");
+        bs.getAssets().forEach((name, amt) ->
+                System.out.printf("%-20s %.2f%n", name, amt));
+
+        System.out.println("Total Assets: " + bs.getTotalAssets());
+
+        System.out.println("\n--- Liabilities ---");
+        bs.getLiabilities().forEach((name, amt) ->
+                System.out.printf("%-20s %.2f%n", name, amt));
+
+        System.out.println("Total Liabilities: " + bs.getTotalLiabilities());
+
+        System.out.println("\n-------------------------");
+
+        if (bs.getTotalAssets() == bs.getTotalLiabilities()) {
+            System.out.println("✅ Balance Sheet Matched");
+        } else {
+            System.out.println("❌ Balance Sheet NOT Matching");
+        }
     }
 
 

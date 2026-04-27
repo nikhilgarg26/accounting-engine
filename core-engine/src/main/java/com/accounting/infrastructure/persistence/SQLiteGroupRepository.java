@@ -102,6 +102,28 @@ public class SQLiteGroupRepository implements GroupRepo {
         }
     }
 
+    @Override
+    public Optional<Group> findByNameAndCompany(String groupName, String companyId) {
+        String sql = "SELECT * FROM groups WHERE company_id = ? and name = ?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, companyId);
+            stmt.setString(2, groupName);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return Optional.of(mapRow(rs));
+            }
+
+            return Optional.empty();
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to fetch group", e);
+        }
+    }
+
     private Group mapRow(ResultSet rs) throws SQLException {
 
         return new Group(
