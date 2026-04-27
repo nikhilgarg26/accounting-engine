@@ -40,15 +40,13 @@ public class SQLiteCompanyRepository implements CompanyRepo {
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                return Optional.of(
-                        new Company(
+                return new Company(
                                 rs.getString("id"),
                                 rs.getString("name")
-                        )
                 );
             }
 
-            return Optional.empty();
+            return null;
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to fetch company", e);

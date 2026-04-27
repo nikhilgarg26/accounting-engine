@@ -34,7 +34,7 @@ public class DatabaseInitializer {
                 CREATE TABLE IF NOT EXISTS ledgers (
                     id TEXT PRIMARY KEY,
                     name TEXT NOT NULL,
-                    parent_group_id TEXT,
+                    parent_group_id TEXT NOT NULL,
                     company_id TEXT NOT NULL,
                     opening_balance REAL,
                     type TEXT,
@@ -49,6 +49,7 @@ public class DatabaseInitializer {
                                               company_id TEXT NOT NULL,
                                               voucher_type TEXT,
                                               date TEXT
+                );
             """;
 
             String createEntryTable = """

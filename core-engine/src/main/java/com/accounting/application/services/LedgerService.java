@@ -37,6 +37,10 @@ public class LedgerService {
                     throw new RuntimeException("Ledger already exists");
                 });
 
+        if (groupId == null || groupId.isBlank()) {
+            throw new RuntimeException("Group should be defined.");
+        }
+
         // group validation
         Group group = groupRepo.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Group not found"));
