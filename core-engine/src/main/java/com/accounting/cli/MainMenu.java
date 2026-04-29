@@ -192,7 +192,7 @@ public class MainMenu {
 
         Ledger drLedger = null;
         Ledger crLedger = null;
-        VoucherTypes type = VoucherTypes.JOURNAL;
+        VoucherTypes type = null;
 
         switch (typeChoice) {
 
@@ -351,9 +351,8 @@ public class MainMenu {
         System.out.println("Name: " + l.getName());
         System.out.println("Group: " + (group != null ? group.getName() : "Unknown"));
 
-        String balance = reportService.getLedgerBalanceFormatted(l.getId());
+        String balance = reportService.getLedgerBalanceFormatted(l.getId(), null, null);
         System.out.println("Balance: " + balance);
-        System.out.println("Type: " + l.getType());
         System.out.println("Company ID: " + l.getCompanyId());
     }
 
@@ -361,8 +360,38 @@ public class MainMenu {
 
         if (!checkCompany()) return;
 
-        List<TrialBalanceRow> rows =
-                reportService.getTrialBalance(selectedCompany.getId());
+        System.out.println("\n1. As of Date");
+        System.out.println("2. Date Range");
+
+        int choice = scanner.nextInt();
+        scanner.nextLine();
+
+        List<TrialBalanceRow> rows;
+
+        if (choice == 1) {
+
+            java.time.LocalDate date =
+                    readDate("Enter date (yyyy-mm-dd): ");
+
+            rows = reportService.getTrialBalance(
+                    selectedCompany.getId(),
+                    null,
+                    date
+            );
+
+        } else {
+
+            java.time.LocalDate from =
+                    readDate("From date: ");
+            java.time.LocalDate to =
+                    readDate("To date: ");
+
+            rows = reportService.getTrialBalance(
+                    selectedCompany.getId(),
+                    from,
+                    to
+            );
+        }
 
         double totalDr = 0;
         double totalCr = 0;
@@ -386,20 +415,23 @@ public class MainMenu {
 
         System.out.printf("%-20s %-10.2f %-10.2f%n",
                 "TOTAL", totalDr, totalCr);
-
-        if (totalDr == totalCr) {
-            System.out.println("✅ Trial Balance Matched");
-        } else {
-            System.out.println("❌ Trial Balance NOT Matching");
-        }
     }
 
     private void viewProfitLoss() {
 
         if (!checkCompany()) return;
 
+        java.time.LocalDate from =
+                readDate("From date (yyyy-mm-dd): ");
+        java.time.LocalDate to =
+                readDate("To date (yyyy-mm-dd): ");
+
         ProfitLossStatement pl =
-                reportService.getProfitLoss(selectedCompany.getId());
+                reportService.getProfitLoss(
+                        selectedCompany.getId(),
+                        from,
+                        to
+                );
 
         System.out.println("\n===== PROFIT & LOSS =====");
 
@@ -415,12 +447,10 @@ public class MainMenu {
 
         System.out.println("Total Expense: " + pl.getTotalExpense());
 
-        System.out.println("\n-------------------------");
-
         if (pl.getProfit() >= 0) {
-            System.out.println("Profit: " + pl.getProfit());
+            System.out.println("\nProfit: " + pl.getProfit());
         } else {
-            System.out.println("Loss: " + Math.abs(pl.getProfit()));
+            System.out.println("\nLoss: " + Math.abs(pl.getProfit()));
         }
     }
 
@@ -428,8 +458,11 @@ public class MainMenu {
 
         if (!checkCompany()) return;
 
+        java.time.LocalDate date =
+                readDate("Enter date (yyyy-mm-dd): ");
+
         BalanceSheet bs =
-                reportService.getBalanceSheet(selectedCompany.getId());
+                reportService.getBalanceSheet(selectedCompany.getId(), null, date);
 
         System.out.println("\n===== BALANCE SHEET =====");
 
@@ -457,6 +490,12 @@ public class MainMenu {
 
 
     // ---------------- UTIL ----------------
+
+    private java.time.LocalDate readDate(String message) {
+        System.out.print(message);
+        String input = scanner.nextLine();
+        return java.time.LocalDate.parse(input);
+    }
 
     private boolean checkCompany() {
         if (selectedCompany == null) {

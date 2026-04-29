@@ -221,6 +221,62 @@ public class SQLiteVoucherRepository implements VoucherRepo {
         }
     }
 
+    @Override
+    public List<Entry> findEntriesByLedgerIdAndDate(
+            String ledgerId,
+            LocalDate from,
+            LocalDate to
+    ) {
+
+        StringBuilder sql = new StringBuilder("""
+        SELECT e.*
+        FROM entries e
+        JOIN vouchers v ON e.voucher_id = v.id
+        WHERE e.ledger_id = ?
+    """);
+
+        // 🔥 Dynamic conditions
+        if (from != null && to != null) {
+            sql.append(" AND v.date BETWEEN ? AND ?");
+        } else if (to != null) {
+            sql.append(" AND v.date <= ?");
+        } else if (from != null) {
+            sql.append(" AND v.date >= ?");
+        }
+
+        sql.append(" ORDER BY v.date ASC");
+
+        List<Entry> list = new ArrayList<>();
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+
+            int index = 1;
+            stmt.setString(index++, ledgerId);
+
+            // 🔥 Set parameters carefully
+            if (from != null && to != null) {
+                stmt.setString(index++, from.toString());
+                stmt.setString(index++, to.toString());
+            } else if (to != null) {
+                stmt.setString(index++, to.toString());
+            } else if (from != null) {
+                stmt.setString(index++, from.toString());
+            }
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                list.add(mapEntry(rs));
+            }
+
+            return list;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to fetch entries", e);
+        }
+    }
+
     // ----------------- MAPPERS -----------------
 
     private Voucher mapVoucher(ResultSet rs) throws SQLException {

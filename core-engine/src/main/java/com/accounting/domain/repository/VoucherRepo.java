@@ -20,4 +20,10 @@ public interface VoucherRepo {
     List<Entry> findEntriesByVoucherId(String voucherId);
 
     List<Entry> findEntriesByLedgerId(String ledgerId);
+
+    List<Entry> findEntriesByLedgerIdAndDate(
+            String ledgerId,
+            LocalDate from,
+            LocalDate to
+    );
 }

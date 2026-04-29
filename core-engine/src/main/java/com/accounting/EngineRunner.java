@@ -20,19 +20,20 @@ public class EngineRunner {
 
         DatabaseInitializer.initialize();
 
-        CompanyRepo companyRepo = new SQLiteCompanyRepository();
-        GroupRepo groupRepo = new SQLiteGroupRepository();
-        LedgerRepo ledgerRepo = new SQLiteLedgerRepository();
-        VoucherRepo voucherRepo = new SQLiteVoucherRepository();
+//        CompanyRepo companyRepo = new SQLiteCompanyRepository();2
 
-        CompanyService companyService =
-                new CompanyService(companyRepo, groupRepo, ledgerRepo);
-
-        VoucherService voucherService =
-                new VoucherService(voucherRepo);
-
-        // 🔥 Seed data
-        new DataSeeder(companyService, groupRepo, ledgerRepo, voucherService).seed();
+//        GroupRepo groupRepo = new SQLiteGroupRepository();
+//        LedgerRepo ledgerRepo = new SQLiteLedgerRepository();
+//        VoucherRepo voucherRepo = new SQLiteVoucherRepository();
+//
+//        CompanyService companyService =
+//                new CompanyService(companyRepo, groupRepo, ledgerRepo);
+//
+//        VoucherService voucherService =
+//                new VoucherService(voucherRepo);
+//
+//        // 🔥 Seed data
+//        new DataSeeder(companyService, groupRepo, ledgerRepo, voucherService).seed();
 
         // Start CLI
         new MainMenu().start();

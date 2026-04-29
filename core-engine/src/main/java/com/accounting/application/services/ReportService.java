@@ -7,6 +7,7 @@ import com.accounting.domain.repository.GroupRepo;
 import com.accounting.domain.repository.LedgerRepo;
 import com.accounting.domain.repository.VoucherRepo;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,36 +28,33 @@ public class ReportService {
     }
 
     // 🔥 Core method
-    public Balance getLedgerBalance(String ledgerId) {
+    public Balance getLedgerBalance(
+            String ledgerId,
+            LocalDate from,
+            LocalDate to
+    ) {
 
-        List<Entry> entries = voucherRepo.findEntriesByLedgerId(ledgerId);
+        List<Entry> entries =
+                voucherRepo.findEntriesByLedgerIdAndDate(ledgerId, from, to);
 
         double net = 0;
 
         for (Entry e : entries) {
-            if (e.getType() == Type.DR) {
-                net += e.getAmount();
-            } else {
-                net -= e.getAmount();
-            }
+            net += (e.getType() == Type.DR) ? e.getAmount() : -e.getAmount();
         }
 
-        // convert net → Balance object
-        if (net > 0) {
-            return new Balance(net, Type.DR);
-        } else if (net < 0) {
-            return new Balance(Math.abs(net), Type.CR);
-        } else {
-            return new Balance(0, null); // zero balance
-        }
+        if (net > 0) return new Balance(net, Type.DR);
+        if (net < 0) return new Balance(Math.abs(net), Type.CR);
+
+        return new Balance(0, null);
     }
 
     // convenience method for CLI
-    public String getLedgerBalanceFormatted(String ledgerId) {
-        return getLedgerBalance(ledgerId).toString();
+    public String getLedgerBalanceFormatted(String ledgerId, LocalDate from,  LocalDate to) {
+        return getLedgerBalance(ledgerId, from, to).toString();
     }
 
-    public List<TrialBalanceRow> getTrialBalance(String companyId) {
+    public List<TrialBalanceRow> getTrialBalance(String companyId, LocalDate from, LocalDate to) {
 
         List<Ledger> ledgers = ledgerRepo.findByCompanyId(companyId);
 
@@ -64,7 +62,7 @@ public class ReportService {
 
         for (Ledger l : ledgers) {
 
-            Balance balance = getLedgerBalance(l.getId());
+            Balance balance = getLedgerBalance(l.getId(), from, to);
 
             double dr = 0;
             double cr = 0;
@@ -81,7 +79,7 @@ public class ReportService {
         return rows;
     }
 
-    public ProfitLossStatement getProfitLoss(String companyId) {
+    public ProfitLossStatement getProfitLoss(String companyId, LocalDate from, LocalDate to) {
 
         List<Ledger> ledgers = ledgerRepo.findByCompanyId(companyId);
 
@@ -93,7 +91,7 @@ public class ReportService {
 
         for (Ledger l : ledgers) {
 
-            Balance balance = getLedgerBalance(l.getId());
+            Balance balance = getLedgerBalance(l.getId(), from, to);
 
             if (balance.getType() == null) continue;
 
@@ -123,7 +121,7 @@ public class ReportService {
         );
     }
 
-    public BalanceSheet getBalanceSheet(String companyId) {
+    public BalanceSheet getBalanceSheet(String companyId, LocalDate from, LocalDate to) {
 
         List<Ledger> ledgers = ledgerRepo.findByCompanyId(companyId);
 
@@ -135,28 +133,35 @@ public class ReportService {
 
         for (Ledger l : ledgers) {
 
-            Balance balance = getLedgerBalance(l.getId());
+            Balance balance = getLedgerBalance(l.getId(), from, to);
             if (balance.getType() == null) continue;
 
             Group group = groupRepo.findById(l.getParentGroup()).orElse(null);
             if (group == null) continue;
 
             double amount = balance.getAmount();
+            Type type = balance.getType();
 
             if (group.getNature() == Nature.ASSETS) {
 
-                assetMap.put(l.getName(), amount);
-                totalAssets += amount;
+                double signedAmount = (type == Type.DR) ? amount : -amount;
 
-            } else if (group.getNature() == Nature.LIABILITY) {
+                assetMap.put(l.getName(), signedAmount);
+                totalAssets += signedAmount;
+            }
 
-                liabilityMap.put(l.getName(), amount);
-                totalLiabilities += amount;
+            // ---------------- LIABILITIES ----------------
+            else if (group.getNature() == Nature.LIABILITY) {
+
+                double signedAmount = (type == Type.CR) ? amount : -amount;
+
+                liabilityMap.put(l.getName(), signedAmount);
+                totalLiabilities += signedAmount;
             }
         }
 
         // 🔥 ADD PROFIT FROM P&L
-        ProfitLossStatement pl = getProfitLoss(companyId);
+        ProfitLossStatement pl = getProfitLoss(companyId, from, to);
 
         double profit = pl.getProfit();
 
